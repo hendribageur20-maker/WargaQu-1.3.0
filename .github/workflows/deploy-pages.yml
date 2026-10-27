@@ -1,0 +1,61 @@
+name: Deploy WargaQu PWA to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy PWA
+    runs-on: ubuntu-latest
+    steps:
+      - name: 1. Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 2. Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: 3. Install Dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: 4. Build Vite PWA Production Bundle
+        run: npm run build
+
+      # Metoda 1: Otomatis push ke branch 'gh-pages' (Untuk pilihan 'Deploy from a branch')
+      - name: 5. Deploy to gh-pages Branch
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist
+          branch: gh-pages
+        continue-on-error: true
+
+      # Metoda 2: Native GitHub Actions Pages Deployment (Untuk pilihan 'GitHub Actions')
+      - name: 6. Setup Pages
+        uses: actions/configure-pages@v5
+        continue-on-error: true
+
+      - name: 7. Upload Artifact for GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+        continue-on-error: true
+
+      - name: 8. Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
